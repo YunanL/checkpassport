@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check NFT Ownership</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script src="check.js" defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        input, button { margin: 10px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Check NFT Ownership</h1>
+
+    <button onclick="connectMetaMask()">Connect MetaMask</button>
+    <p id="wallet-address">Wallet: Not Connected</p>
+
+    <button onclick="checkNFTOwnership()">Check NFT</button>
+    <p id="status"></p>
+</body>
+</html>
+
