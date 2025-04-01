@@ -581,26 +581,24 @@ const nftAbi = [
     }
 ];
 
+// --- Connect Wallet ---
 async function connectMetaMask() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAccount = (await web3.eth.getAccounts())[0];
         document.getElementById("wallet-address").innerText = `Wallet: ${userAccount}`;
+        loadNFTs();
     } else {
         alert("Please install MetaMask!");
     }
 }
 
+// --- Load NFTs ---
 async function loadNFTs() {
-    if (!userAccount) {
-        alert("Please connect MetaMask first!");
-        return;
-    }
-
     const contract = new web3.eth.Contract(nftAbi, nftContractAddress);
     const nftListDiv = document.getElementById("nft-list");
-    nftListDiv.innerHTML = "Loading...";
+    nftListDiv.innerHTML = "Loading NFTs...";
 
     try {
         const balance = await contract.methods.balanceOf(userAccount).call();
@@ -617,34 +615,29 @@ async function loadNFTs() {
             const decoded = atob(tokenUri.replace("data:application/json;base64,", ""));
             const metadata = JSON.parse(decoded);
 
-            // ✅ Only show NFTs that contain all required traits
-            if (metadata.attributes &&
-                metadata.attributes.find(attr => attr.trait_type === "Machine ID") &&
-                metadata.attributes.find(attr => attr.trait_type === "Function") &&
-                metadata.attributes.find(attr => attr.trait_type === "Usage Duration") &&
-                metadata.attributes.find(attr => attr.trait_type === "Expires On")) {
-
-                const nftHtml = `
-                    <div class="nft-item">
-                        <h3>Machine NFT #${tokenId}</h3>
-                        <p><strong>Name:</strong> ${metadata.name}</p>
-                        <p><strong>Description:</strong> ${metadata.description}</p>
-                        <p><strong>Machine ID:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Machine ID")?.value}</p>
-                        <p><strong>Function:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Function")?.value}</p>
-                        <p><strong>Usage Duration:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Usage Duration")?.value}</p>
-                        <p><strong>Expires On:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Expires On")?.value}</p>
-                    </div>
-                `;
-                nftListDiv.innerHTML += nftHtml;
-            }
+            nftListDiv.innerHTML += renderNFTCard(tokenId, metadata);
         }
-
-        if (nftListDiv.innerHTML.trim() === "") {
-            nftListDiv.innerHTML = "✅ No valid Machine NFTs found.";
-        }
-
-    } catch (error) {
-        console.error(error);
-        nftListDiv.innerHTML = "❌ Error loading NFTs!";
+    } catch (err) {
+        console.error(err);
+        nftListDiv.innerHTML = "❌ Error loading NFTs";
     }
+}
+
+// --- Render NFT Card ---
+function renderNFTCard(tokenId, metadata) {
+    const attributes = metadata.attributes || [];
+
+    let traitsHTML = "";
+    attributes.forEach(attr => {
+        traitsHTML += `<p><strong>${attr.trait_type}:</strong> ${attr.value}</p>`;
+    });
+
+    return `
+        <div class="nft-card">
+            <h3>Machine NFT #${tokenId}</h3>
+            <p><strong>Name:</strong> ${metadata.name || "N/A"}</p>
+            <p><strong>Description:</strong> ${metadata.description || "N/A"}</p>
+            ${traitsHTML}
+        </div>
+    `;
 }
