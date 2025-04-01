@@ -586,7 +586,6 @@ async function connectMetaMask() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
-
         userAccount = (await web3.eth.getAccounts())[0];
         document.getElementById("wallet-address").innerText = `Wallet: ${userAccount}`;
     } else {
@@ -594,23 +593,45 @@ async function connectMetaMask() {
     }
 }
 
-async function checkNFTOwnership() {
+async function loadNFTs() {
     if (!userAccount) {
-        alert("Connect MetaMask first!");
+        alert("Please connect MetaMask first!");
         return;
     }
 
-    const nftContract = new web3.eth.Contract(nftAbi, nftContractAddress);
+    const contract = new web3.eth.Contract(nftAbi, nftContractAddress);
+    const nftListDiv = document.getElementById("nft-list");
+    nftListDiv.innerHTML = "Loading...";
 
     try {
-        const owner = await nftContract.methods.ownerOf(nftTokenId).call();
-        if (owner.toLowerCase() === userAccount.toLowerCase()) {
-            document.getElementById("status").innerText = "✅ Access Granted! You own the required NFT.";
-        } else {
-            document.getElementById("status").innerText = "❌ Access Denied! You do NOT own the required NFT.";
+        const balance = await contract.methods.balanceOf(userAccount).call();
+        if (balance == 0) {
+            nftListDiv.innerHTML = "❌ No NFTs found.";
+            return;
+        }
+
+        nftListDiv.innerHTML = "";
+        for (let i = 0; i < balance; i++) {
+            const tokenId = await contract.methods.tokenOfOwnerByIndex(userAccount, i).call();
+            const tokenUri = await contract.methods.tokenURI(tokenId).call();
+
+            const metadata = JSON.parse(atob(tokenUri.replace("data:application/json;base64,", "")));
+
+            const nftHtml = `
+                <div class="nft-item">
+                    <h3>Machine NFT #${tokenId}</h3>
+                    <p><strong>Name:</strong> ${metadata.name}</p>
+                    <p><strong>Description:</strong> ${metadata.description}</p>
+                    <p><strong>Machine ID:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Machine ID")?.value}</p>
+                    <p><strong>Function:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Function")?.value}</p>
+                    <p><strong>Usage Duration:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Usage Duration")?.value}</p>
+                    <p><strong>Expires On:</strong> ${metadata.attributes.find(attr => attr.trait_type === "Expires On")?.value}</p>
+                </div>
+            `;
+            nftListDiv.innerHTML += nftHtml;
         }
     } catch (error) {
         console.error(error);
-        document.getElementById("status").innerText = "❌ Error checking NFT.";
+        nftListDiv.innerHTML = "Error loading NFTs!";
     }
 }
