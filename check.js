@@ -582,18 +582,27 @@ const nftAbi = [
 ];
 
 // --- Connect Wallet ---
+// async function connectMetaMask() {
+//     if (window.ethereum) {
+//         web3 = new Web3(window.ethereum);
+//         await window.ethereum.request({ method: "eth_requestAccounts" });
+//         userAccount = (await web3.eth.getAccounts())[0];
+//         document.getElementById("wallet-address").innerText = `Wallet: ${userAccount}`;
+//         alert("✅ Wallet Connected! You can now click 'Load NFTs'");
+//     } else {
+//         alert("Please install MetaMask!");
+//     }
+// }
 async function connectMetaMask() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAccount = (await web3.eth.getAccounts())[0];
         document.getElementById("wallet-address").innerText = `Wallet: ${userAccount}`;
-        alert("✅ Wallet Connected! You can now click 'Load NFTs'");
     } else {
         alert("Please install MetaMask!");
     }
 }
-
 // --- Load NFTs ---
 async function loadNFTs() {
     if (!userAccount) {
