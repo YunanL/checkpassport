@@ -588,7 +588,7 @@ async function connectMetaMask() {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAccount = (await web3.eth.getAccounts())[0];
         document.getElementById("wallet-address").innerText = `Wallet: ${userAccount}`;
-        loadNFTs();
+        alert("✅ Wallet Connected! You can now click 'Load NFTs'");
     } else {
         alert("Please install MetaMask!");
     }
@@ -596,6 +596,11 @@ async function connectMetaMask() {
 
 // --- Load NFTs ---
 async function loadNFTs() {
+    if (!userAccount) {
+        alert("Please connect MetaMask first!");
+        return;
+    }
+
     const contract = new web3.eth.Contract(nftAbi, nftContractAddress);
     const nftListDiv = document.getElementById("nft-list");
     nftListDiv.innerHTML = "Loading NFTs...";
