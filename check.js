@@ -603,7 +603,7 @@ async function connectMetaMask() {
         alert("Please install MetaMask!");
     }
 }
-// --- Load NFTs ---
+// Load NFTs and display them
 async function loadNFTs() {
     if (!userAccount) {
         alert("Please connect MetaMask first!");
@@ -626,8 +626,14 @@ async function loadNFTs() {
             const tokenId = await contract.methods.tokenOfOwnerByIndex(userAccount, i).call();
             const tokenUri = await contract.methods.tokenURI(tokenId).call();
 
-            const decoded = atob(tokenUri.replace("data:application/json;base64,", ""));
-            const metadata = JSON.parse(decoded);
+            let metadata;
+            if (tokenUri.startsWith("data:application/json;base64,")) {
+                const decoded = atob(tokenUri.replace("data:application/json;base64,", ""));
+                metadata = JSON.parse(decoded);
+            } else {
+                const response = await fetch(tokenUri);
+                metadata = await response.json();
+            }
 
             nftListDiv.innerHTML += renderNFTCard(tokenId, metadata);
         }
@@ -637,10 +643,8 @@ async function loadNFTs() {
     }
 }
 
-// --- Render NFT Card ---
 function renderNFTCard(tokenId, metadata) {
     const attributes = metadata.attributes || [];
-
     let traitsHTML = "";
     attributes.forEach(attr => {
         traitsHTML += `<p><strong>${attr.trait_type}:</strong> ${attr.value}</p>`;
